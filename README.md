@@ -1,2 +1,2 @@
-Samuel Gomà Atehortua
+Samuel Gomà Atehortua, 
 Àlex Escofet Presedo
