@@ -14,6 +14,8 @@ public class Client {
             Socket s1 = new Socket(host, port1);
             Socket s2 = new Socket(host, port2);
 
+            System.out.println("Connected");
+
             //EL DOS
             OutputStream os = s1.getOutputStream();
             DataOutputStream dos = new DataOutputStream(os);
@@ -22,14 +24,15 @@ public class Client {
             InputStream is = s2.getInputStream();
             BufferedReader dis = new BufferedReader(new InputStreamReader(is));
 
+            BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
             String entrada;
             Boolean fi = false;
             Scanner scanner = new Scanner(System.in);
             String sortida;
             while (!fi){
                 //Zona de envios
-                if(scanner.hasNextLine()){
-                    entrada = scanner.nextLine();
+                if(reader.ready()){
+                    entrada = reader.readLine();
                     //Filtramos mensajes vacios
                     if(entrada != null && !entrada.trim().isEmpty()){
                         dos.writeUTF(entrada + "\n");
@@ -52,6 +55,7 @@ public class Client {
                     }
 
                     if(sortida.equals("FI")){
+                        fi = true;
                         System.out.println("El servidor ha tancat la conexió");
                     }
                 }
