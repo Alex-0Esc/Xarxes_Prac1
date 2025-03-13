@@ -13,7 +13,9 @@ public class Server {
             ServerSocket ss1 = new ServerSocket(port1);
             ServerSocket ss2 = new ServerSocket(port2);
             Socket s_entrada = ss1.accept();
+            System.out.println("ok1");
             Socket s_sortida = ss2.accept();
+            System.out.println("ok2");
 
             //EL DIS
             InputStream is = s_entrada.getInputStream();
@@ -23,6 +25,8 @@ public class Server {
             OutputStream os = s_sortida.getOutputStream();
             DataOutputStream dos = new DataOutputStream(os);
 
+            BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+
 
             //intentarem llegir-ho tot i ho retornarem per pantalla fins que ens diguin FI
             Boolean fi = false;//quizas estaria bien que fi fuera una variable compartida pero puede que eso de problemas al forzar cerrado
@@ -30,25 +34,25 @@ public class Server {
             Scanner scanner = new Scanner(System.in);
             String entrada;
             while(!fi){
-                Debugger.debug("1");
+                //Debugger.debug("1");
                 //Zona de envios
-                if(scanner.hasNextLine()){
-                    entrada = scanner.nextLine();
+                if(reader.ready()){
+                    entrada = reader.readLine();
                     //Filtramos mensajes vacios
                     if(entrada != null && !entrada.trim().isEmpty()){
                         dos.writeUTF(entrada + "\n");
                         dos.flush();
-                        Debugger.debug("He escrito: " + entrada);
+                        //Debugger.debug("He escrito: " + entrada);
                     }
                     if(entrada.equals("FI")){
                         fi = true;
                         System.out.println("Has acabat la conexió");
                     }
                 }else{
-                    Debugger.debug("estamos aqui?");
+                    //Debugger.debug("estamos aqui?");
                 }
 
-                Debugger.debug("2");
+                //Debugger.debug("2");
                 //zona de lectura
                 if(dis.ready()){
                     Debugger.debug("He detectado algo que leer!");
