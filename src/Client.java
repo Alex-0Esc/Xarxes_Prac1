@@ -1,74 +1,118 @@
 import java.io.*;
 import java.net.Socket;
-import java.util.Scanner;
 
 public class Client {
-    public static void main(String[] args) {
 
+    public static volatile Boolean fi = false; // Volatile para asegurar visibilidad entre hilos
+
+    public static void main(String[] args) throws IOException {
         String host = "localhost";
         int port1 = 12345;
         int port2 = 54321;
+        Socket s1 = new Socket(host, port1);
+        Socket s2 = new Socket(host, port2);
+        BufferedReader reader = new BufferedReader(new InputStreamReader(s2.getInputStream()));
+        String mensajeInicial = reader.readLine();
+        System.out.println("Servidor: " + mensajeInicial);
 
-        try {
-            //Los socket
-            Socket s1 = new Socket(host, port1);
-            Socket s2 = new Socket(host, port2);
+        try{
+            Thread readerThread = new Thread(new ReadInput(s2));
+            Thread writerThread = new Thread(new WriteOutput(s1));
+            readerThread.start();
+            writerThread.start();
 
-            System.out.println("Connected");
+            readerThread.join();  // Esperar a que terminen los hilos
+            writerThread.join();
+            System.out.println("Tancant connexió...");
 
-            //EL DOS
-            OutputStream os = s1.getOutputStream();
-            DataOutputStream dos = new DataOutputStream(os);
+        } catch (Exception e) {
+            System.out.println("El servidor no està disponible.");
+        }
+    }
 
-            //EL DIS
-            InputStream is = s2.getInputStream();
-            BufferedReader dis = new BufferedReader(new InputStreamReader(is));
+    public static class WriteOutput implements Runnable {
+        private final Socket mySocket;
+        private final BufferedWriter writer;
+        private final BufferedReader reader;
 
-            BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-            String entrada;
-            Boolean fi = false;
-            Scanner scanner = new Scanner(System.in);
-            String sortida;
-            while (!fi){
-                //Zona de envios
-                if(reader.ready()){
-                    entrada = reader.readLine();
-                    //Filtramos mensajes vacios
-                    if(entrada != null && !entrada.trim().isEmpty()){
-                        dos.writeUTF(entrada + "\n");
-                        dos.flush();
-                        Debugger.debug("He escrito: " + entrada);
+        public WriteOutput(Socket socket) {
+            this.mySocket = socket;
+            try {
+                this.writer = new BufferedWriter(new OutputStreamWriter(mySocket.getOutputStream()));
+                this.reader = new BufferedReader(new InputStreamReader(System.in));
+            } catch (IOException e) {
+                throw new RuntimeException("Error al inicializar la salida", e);
+            }
+        }
+
+        @Override
+        public void run() {
+            try {
+                String entrada;
+                while (!fi && (entrada = reader.readLine()) != null) {
+                    if (!entrada.trim().isEmpty()) {
+                        writer.write(entrada + "\n");
+                        writer.flush();
                     }
-                    if(entrada.equals("FI")){
+                    if (entrada.equalsIgnoreCase("FI")) {
+                        System.out.println("Has tancat la connexió.");
                         fi = true;
-                        System.out.println("Has acabat la conexió");
+                        break;
                     }
                 }
-                //Zona de lectura
-                if(dis.ready()){
-                    Debugger.debug("He detectado algo que leer!");
-                    sortida = dis.readLine();
-                    sortida = sortida.replaceAll("[^\\x20-\\x7E]", ""); // Elimina caracteres fuera del rango imprimible ASCII
-                    //Filtramos mensajes vacios
-                    if(sortida != null && !sortida.trim().isEmpty()) {
-                        System.out.println("Servidor: " + sortida);
-                    }
-
-                    if(sortida.equals("FI")){
-                        fi = true;
-                        System.out.println("El servidor ha tancat la conexió");
-                    }
+            } catch (IOException e) {
+                System.out.println("Error en la escritura del cliente.");
+                System.exit(0);
+            } finally {
+                try {
+                    writer.close();
+                    reader.close();
+                    mySocket.close();
+                    System.exit(0);
+                } catch (IOException ignored) {
                 }
             }
+        }
+    }
 
-            //tancament de canals
-            dis.close();
-            s1.close();
-            dos.close();
-            s2.close();
-        }catch (Exception e){
-            System.out.println("El servidor no esta disponible");
-            //e.printStackTrace();
+    public static class ReadInput implements Runnable {
+        private final Socket mySocket;
+        private final BufferedReader reader;
+
+        public ReadInput(Socket socket) {
+            this.mySocket = socket;
+            try {
+                this.reader = new BufferedReader(new InputStreamReader(mySocket.getInputStream()));
+            } catch (IOException e) {
+                throw new RuntimeException("Error al inicializar la entrada", e);
+            }
+        }
+
+        @Override
+        public void run() {
+            try {
+                String entrada;
+                while (!fi && (entrada = reader.readLine()) != null) {
+                    entrada = entrada.replaceAll("[^\\x20-\\x7E]", ""); // Elimina caracteres no imprimibles
+                    if (!entrada.trim().isEmpty()) {
+                        System.out.println("Servidor: " + entrada);
+                    }
+                    if (entrada.equalsIgnoreCase("FI")) {
+                        System.out.println("El servidor ha tancat la connexió.");
+                        fi = true;
+                        break;
+                    }
+                }
+            } catch (IOException e) {
+                System.out.println("Error en la lectura del servidor. El servidor s'ha desconectat.");
+                System.exit(0);
+            } finally {
+                try {
+                    reader.close();
+                    mySocket.close();
+                } catch (IOException ignored) {
+                }
+            }
         }
     }
 }
