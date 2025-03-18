@@ -63,7 +63,7 @@ public class Server {
                     if (entrada.equalsIgnoreCase("FI")) {
                         System.out.println("Has tancat la connexió.");
                         fi = true;
-                        break;
+                        System.exit(0);
                     }
                 }
             } catch (IOException e) {
@@ -104,7 +104,7 @@ public class Server {
                     if (entrada.equalsIgnoreCase("FI")) {
                         System.out.println("El client ha tancat la connexió.");
                         fi = true;
-                        break;
+                        System.exit(0);
                     }
                 }
             } catch (IOException e) {

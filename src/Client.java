@@ -6,16 +6,18 @@ public class Client {
     public static volatile Boolean fi = false; // Volatile para asegurar visibilidad entre hilos
 
     public static void main(String[] args) throws IOException {
-        String host = "localhost";
-        int port1 = 12345;
-        int port2 = 54321;
-        Socket s1 = new Socket(host, port1);
-        Socket s2 = new Socket(host, port2);
-        BufferedReader reader = new BufferedReader(new InputStreamReader(s2.getInputStream()));
-        String mensajeInicial = reader.readLine();
-        System.out.println("Servidor: " + mensajeInicial);
+
 
         try{
+            String host = "localhost";
+            int port1 = 12345;
+            int port2 = 54321;
+            Socket s1 = new Socket(host, port1);
+            Socket s2 = new Socket(host, port2);
+            BufferedReader reader = new BufferedReader(new InputStreamReader(s2.getInputStream()));
+            String mensajeInicial = reader.readLine();
+            System.out.println("Servidor: " + mensajeInicial);
+
             Thread readerThread = new Thread(new ReadInput(s2));
             Thread writerThread = new Thread(new WriteOutput(s1));
             readerThread.start();
@@ -57,7 +59,7 @@ public class Client {
                     if (entrada.equalsIgnoreCase("FI")) {
                         System.out.println("Has tancat la connexió.");
                         fi = true;
-                        break;
+                        System.exit(0);
                     }
                 }
             } catch (IOException e) {
@@ -100,7 +102,7 @@ public class Client {
                     if (entrada.equalsIgnoreCase("FI")) {
                         System.out.println("El servidor ha tancat la connexió.");
                         fi = true;
-                        break;
+                        System.exit(0);
                     }
                 }
             } catch (IOException e) {
