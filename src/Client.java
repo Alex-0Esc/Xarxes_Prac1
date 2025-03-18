@@ -16,7 +16,12 @@ public class Client {
             Socket s2 = new Socket(host, port2);
             BufferedReader reader = new BufferedReader(new InputStreamReader(s2.getInputStream()));
             String mensajeInicial = reader.readLine();
-            System.out.println("Servidor: " + mensajeInicial);
+            System.out.println("Servidor: <<" + mensajeInicial +">>");
+
+            // Thread per detectar el tancament abrupte per part del client
+            Thread monitor = new Thread(new Client.Alive(s1));
+            monitor.setDaemon(true);
+            monitor.start();
 
             Thread readerThread = new Thread(new ReadInput(s2));
             Thread writerThread = new Thread(new WriteOutput(s1));
@@ -97,7 +102,7 @@ public class Client {
                 while (!fi && (entrada = reader.readLine()) != null) {
                     entrada = entrada.replaceAll("[^\\x20-\\x7E]", ""); // Elimina caracteres no imprimibles
                     if (!entrada.trim().isEmpty()) {
-                        System.out.println("Servidor: " + entrada);
+                        System.out.println("Servidor: <<" + entrada + ">>");
                     }
                     if (entrada.equalsIgnoreCase("FI")) {
                         System.out.println("El servidor ha tancat la connexió.");
@@ -106,7 +111,7 @@ public class Client {
                     }
                 }
             } catch (IOException e) {
-                System.out.println("Error en la lectura del servidor. El servidor s'ha desconectat.");
+                System.out.println("Connexió tancada.");
                 System.exit(0);
             } finally {
                 try {
@@ -114,6 +119,41 @@ public class Client {
                     mySocket.close();
                 } catch (IOException ignored) {
                 }
+            }
+        }
+    }
+    public static class Alive implements Runnable{
+
+        private final Socket mySocket;
+        private InputStream inputStream;
+        private byte[] buffer;
+        private int bytesRead;
+        public Alive(Socket socket){
+            this.mySocket = socket;
+            try {
+                this.inputStream = socket.getInputStream();
+                this.buffer = new byte[1];
+            } catch (IOException e) {
+                throw new RuntimeException("Error al inicializar la entrada", e);
+            }
+        }
+
+        @Override
+        public void run() {
+
+            try {
+                while (!mySocket.isClosed()) {
+                    this.bytesRead = inputStream.read(buffer);
+                    if (bytesRead == -1) { // -1 indica que el servidor cerró la conexión
+                        Debugger.debug("Hey listen!");
+                        break;
+                    }
+                }
+                System.out.println("El servidor ha tancat la connexió de forma abrupta...");
+                System.exit(0);
+            } catch (IOException e) {
+                System.out.println("El servidor ha tancat la connexió de forma abrupta...");
+                System.exit(0);
             }
         }
     }
