@@ -13,9 +13,11 @@ public class Server {
         try {
             ServerSocket ss1 = new ServerSocket(port1);
             ServerSocket ss2 = new ServerSocket(port2);
+            ServerSocket ss3 = new ServerSocket(port3);
             System.out.println("Esperant connexions...");
             Socket sEntrada = ss1.accept();
             Socket sSortida = ss2.accept();
+            Socket sAlive = ss3.accept();
 
 
             System.out.println("Connexió acceptada.");
@@ -24,7 +26,7 @@ public class Server {
             writer.flush();
 
             // Thread per detectar el tancament abrupte per part del client
-            Thread monitor = new Thread(new Alive(sEntrada));
+            Thread monitor = new Thread(new Alive(sAlive));
             monitor.setDaemon(true);
             monitor.start();
 
@@ -175,10 +177,11 @@ public class Server {
             try {
                 while (!mySocket.isClosed()) {
                     this.bytesRead = inputStream.read(buffer);
-                    if (bytesRead == -1) { // -1 indica que el servidor cerró la conexión
+                    if (bytesRead == -1) { // -1 indica que s'ha tancat la conexió
                         Debugger.debug("Hey listen!");
                         break;
                     }
+                    //No fa falta dormir el threat per que es queda encallat al read.
                 }
                 System.out.println("El client ha tancat la connexió de forma abrupta...");
                 System.exit(0);

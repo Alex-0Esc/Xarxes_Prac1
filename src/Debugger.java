@@ -1,5 +1,5 @@
 public class Debugger {
-    public static boolean debug = true;
+    public static boolean debug = false;
     public static synchronized void debug (String s)
     {
         if (debug)

@@ -12,14 +12,16 @@ public class Client {
             String host = "localhost";
             int port1 = 12345;
             int port2 = 54321;
+            int port3 = 50000;
             Socket s1 = new Socket(host, port1);
             Socket s2 = new Socket(host, port2);
+            Socket s3 = new Socket(host, port3); //Necesitem un tercer socket per que si no Alive es menja part de les dades client -> servidor
             BufferedReader reader = new BufferedReader(new InputStreamReader(s2.getInputStream()));
             String mensajeInicial = reader.readLine();
             System.out.println("Servidor: <<" + mensajeInicial +">>");
 
             // Thread per detectar el tancament abrupte per part del client
-            Thread monitor = new Thread(new Client.Alive(s1));
+            Thread monitor = new Thread(new Client.Alive(s3));
             monitor.setDaemon(true);
             monitor.start();
 
@@ -137,17 +139,16 @@ public class Client {
                 throw new RuntimeException("Error al inicializar la entrada", e);
             }
         }
-
         @Override
         public void run() {
-
             try {
                 while (!mySocket.isClosed()) {
                     this.bytesRead = inputStream.read(buffer);
-                    if (bytesRead == -1) { // -1 indica que el servidor cerró la conexión
+                    if (bytesRead == -1) { // -1 indica que s'ha tancat la conexió
                         Debugger.debug("Hey listen!");
                         break;
                     }
+                    //No fa falta dormir el threat per que es queda encallat al read.
                 }
                 System.out.println("El servidor ha tancat la connexió de forma abrupta...");
                 System.exit(0);
