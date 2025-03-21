@@ -11,10 +11,14 @@ public class Server {
 
     public static void main(String[] args) throws IOException {
         try {
+
+            //Inicialització de dades i estructures
             ServerSocket ss1 = new ServerSocket(port1);
             ServerSocket ss2 = new ServerSocket(port2);
             ServerSocket ss3 = new ServerSocket(port3);
+
             System.out.println("Esperant connexions...");
+
             Socket sEntrada = ss1.accept();
             Socket sSortida = ss2.accept();
             Socket sAlive = ss3.accept();
@@ -30,11 +34,16 @@ public class Server {
             monitor.setDaemon(true);
             monitor.start();
 
+            //Thread per llegir
             Thread readThread = new Thread(new ReadInput(sEntrada));
+
+            //Thread per escriure
             Thread writeThread = new Thread(new WriteOutput(sSortida));
+
             readThread.start();
             writeThread.start();
 
+            //Esperem a que acabin els threads
             readThread.join();
             writeThread.join();
 
@@ -45,6 +54,7 @@ public class Server {
         }
     }
 
+    //Classe per escriure missatges
     public static class WriteOutput implements Runnable {
         private final Socket mySocket;
         private final BufferedWriter writer;
@@ -64,6 +74,7 @@ public class Server {
         public void run() {
             try {
                 String entrada;
+                //Si no s'ha rebut fi, i hi ha algo per llegir, llegim i filtrem missatges buits
                 while (!fi && (entrada = reader.readLine()) != null) {
                     if (!entrada.trim().isEmpty()) {
                         writer.write(entrada + "\n");
@@ -88,6 +99,7 @@ public class Server {
         }
     }
 
+    //Classe per llegir l'unput
     public static class ReadInput implements Runnable {
         private final Socket mySocket;
         private final BufferedReader reader;
@@ -105,7 +117,7 @@ public class Server {
             try {
                 String entrada;
                 while (!fi && (entrada = reader.readLine()) != null) {
-                    entrada = entrada.replaceAll("[^\\x20-\\x7E]", ""); // Filtra caracteres no imprimibles
+                     // Filtra caracteres no imprimibles
                     if (!entrada.trim().isEmpty()) {
                         System.out.println("Client: <<" + entrada + ">>");
                     }
@@ -128,33 +140,7 @@ public class Server {
         }
     }
 
-    //El antiguo metodo Alive, creo que es mucho peor pero bueno ya lo quitaremos mas tarde
-    /*
-    public static class Alive implements Runnable{
-
-        private final Socket mySocket;
-        public Alive(Socket socket){
-            this.mySocket = socket;
-        }
-
-        @Override
-        public void run() {
-
-            try {
-                while (!mySocket.isClosed()) {
-                    //Debugger.debug("¿¿¿Estas vivo???");
-                    Thread.sleep(250); // Pausa per no quemar la CPU
-                }
-                Debugger.debug("Creo que aqui si que llego");
-                System.out.println("El client ha tancat la connexió de forma abrupta...");
-                System.exit(0);
-            } catch (InterruptedException e) {
-                System.out.println("El client ha tancat la connexió de forma abrupta...");
-                System.exit(0);
-            }
-        }
-    }
-     */
+    //Aquesta classe serveix per comprobar si el Client està viu, i per tant, continuar executant-se
     public static class Alive implements Runnable{
 
         private final Socket mySocket;
@@ -192,3 +178,9 @@ public class Server {
         }
     }
 }
+
+
+
+
+
+

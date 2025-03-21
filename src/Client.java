@@ -13,9 +13,11 @@ public class Client {
             int port1 = 12345;
             int port2 = 54321;
             int port3 = 50000;
+
             Socket s1 = new Socket(host, port1);
             Socket s2 = new Socket(host, port2);
             Socket s3 = new Socket(host, port3); //Necesitem un tercer socket per que si no Alive es menja part de les dades client -> servidor
+
             BufferedReader reader = new BufferedReader(new InputStreamReader(s2.getInputStream()));
             String mensajeInicial = reader.readLine();
             System.out.println("Servidor: <<" + mensajeInicial +">>");
@@ -25,6 +27,7 @@ public class Client {
             monitor.setDaemon(true);
             monitor.start();
 
+            //Creem threads
             Thread readerThread = new Thread(new ReadInput(s2));
             Thread writerThread = new Thread(new WriteOutput(s1));
             readerThread.start();
@@ -39,6 +42,7 @@ public class Client {
         }
     }
 
+    //Classe per escriure el missatge
     public static class WriteOutput implements Runnable {
         private final Socket mySocket;
         private final BufferedWriter writer;
@@ -84,6 +88,7 @@ public class Client {
         }
     }
 
+    //Classe per llegir missatge
     public static class ReadInput implements Runnable {
         private final Socket mySocket;
         private final BufferedReader reader;
@@ -102,7 +107,7 @@ public class Client {
             try {
                 String entrada;
                 while (!fi && (entrada = reader.readLine()) != null) {
-                    entrada = entrada.replaceAll("[^\\x20-\\x7E]", ""); // Elimina caracteres no imprimibles
+                     // Elimina caracteres no imprimibles
                     if (!entrada.trim().isEmpty()) {
                         System.out.println("Servidor: <<" + entrada + ">>");
                     }
@@ -124,6 +129,8 @@ public class Client {
             }
         }
     }
+
+    //Classe per comprobar que el servidor està viu, i per tant, seguir executant-se
     public static class Alive implements Runnable{
 
         private final Socket mySocket;
